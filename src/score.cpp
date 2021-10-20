@@ -6,11 +6,24 @@ namespace CaDiCaL {
 // smallest variable index first (thus picked first) and larger indices at
 // the end.
 //
-void Internal::init_scores (int old_max_var, int new_max_var) {
+void Internal::init_scores (int old_max_var, int new_max_var, int* excluded, int numExcluded) {
   LOG ("initializing EVSIDS scores from %d to %d",
     old_max_var + 1, new_max_var);
-  for (int i = old_max_var; i < new_max_var; i++)
-    scores.push_back (i + 1);
+  if(excluded){
+    int* listPointer = excluded;
+    int remaining = numExcluded;
+    for (int i = old_max_var; i < new_max_var; i++)
+      if(remaining == 0 || *listPointer != i + 1){
+        scores.push_back (i + 1);
+      }else{
+        remaining -= 1;
+        listPointer += 1;
+      }
+  }else{
+    for (int i = old_max_var; i < new_max_var; i++)
+      scores.push_back (i + 1);
+  }
+
 }
 
 // Shuffle the EVSIDS heap.

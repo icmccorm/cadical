@@ -7,6 +7,7 @@ struct score_smaller {
   Internal * internal;
   score_smaller (Internal * i) : internal (i) { }
   bool operator () (unsigned a, unsigned b);
+  bool skip;
 };
 
 typedef heap<score_smaller> ScoreSchedule;

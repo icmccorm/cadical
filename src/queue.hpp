@@ -8,7 +8,7 @@ namespace CaDiCaL {
 struct Link {
 
   int prev, next;    // variable indices
-
+  bool skip;
   // initialized explicitly in 'init_queue'
 };
 
@@ -46,6 +46,7 @@ struct Queue {
     last = idx;
     l.next = 0;
   }
+
 };
 
 }

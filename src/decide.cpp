@@ -12,7 +12,7 @@ namespace CaDiCaL {
 int Internal::next_decision_variable_on_queue () {
   int64_t searched = 0;
   int res = queue.unassigned;
-  while (val (res))
+  while (val (res) || link(res).skip)
     res = link (res).prev, searched++;
   if (searched) {
     stats.searched += searched;
@@ -28,7 +28,7 @@ int Internal::next_decision_variable_with_best_score () {
   int res = 0;
   for (;;) {
     res = scores.front ();
-    if (!val (res)) break;
+    if (!val (res) ) break;
     (void) scores.pop_front ();
   }
   LOG ("next decision variable %d with score %g", res, score (res));

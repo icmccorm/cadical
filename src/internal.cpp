@@ -160,8 +160,8 @@ void Internal::init_vars (int new_max_var) {
   assert (!btab[0]);
   int old_max_var = max_var;
   max_var = new_max_var;
-  init_queue (old_max_var, new_max_var);
-  init_scores (old_max_var, new_max_var);
+  init_queue (old_max_var, new_max_var, NULL, 0);
+  init_scores (old_max_var, new_max_var, NULL, 0);
   int initialized = new_max_var - old_max_var;
   stats.vars += initialized;
   stats.unused += initialized;

@@ -13,6 +13,8 @@ struct Flags {        // Variable flags.
   bool removable : 1;    // can be removed in 'minimize'
   bool shrinkable : 1; // can be removed in 'shrink'
 
+  bool auxilliary : 1;
+
   // These three variable flags are used to schedule clauses in subsumption
   // ('subsume'), variables in bounded variable elimination ('elim') and in
   // hyper ternary resolution ('ternary').
@@ -37,7 +39,8 @@ struct Flags {        // Variable flags.
     FIXED       = 2,
     ELIMINATED  = 3,
     SUBSTITUTED = 4,
-    PURE        = 5
+    PURE        = 5,
+    AUXILLIARY  = 6
   };
 
   unsigned char status : 3;
@@ -45,7 +48,7 @@ struct Flags {        // Variable flags.
   // Initialized explicitly in 'Internal::init' through this function.
   //
   Flags () {
-    seen = keep = poison = removable = shrinkable = false;
+    seen = keep = poison = removable = shrinkable = auxilliary = false;
     subsume = elim = ternary = true;
     block = 3u;
     skip = assumed = failed = 0;

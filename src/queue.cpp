@@ -5,8 +5,9 @@ namespace CaDiCaL {
 // Slightly different than 'bump_variable' since the variable is not
 // enqueued at all.
 
-inline void Internal::init_enqueue (int idx) {
+inline void Internal::init_enqueue (int idx, bool skip) {
   Link & l = links[idx];
+  l.skip = skip;
   if (opts.reverse) {
     l.prev = 0;
     if (queue.first) {
@@ -44,13 +45,33 @@ inline void Internal::init_enqueue (int idx) {
 // that variables with smaller index are more important.  This is the same
 // as in MiniSAT (implicitly) and also matches the 'scores' initialization.
 //
-void Internal::init_queue (int old_max_var, int new_max_var) {
+
+// MOD: assumes a sorted list auxiliary variables to exclude from the decision queue
+void Internal::init_queue (int old_max_var, int new_max_var, int* excluded, int numExcluded) {
   LOG ("initializing VMTF queue from %d to %d",
     old_max_var + 1, new_max_var);
   assert (old_max_var < new_max_var);
   assert (!level);
-  for (int idx = old_max_var; idx < new_max_var; idx++)
-    init_enqueue (idx + 1);
+  
+  if(excluded && numExcluded > 0){
+    int remaining = numExcluded;
+    int* listPointer = excluded;
+
+    for (int idx = old_max_var; idx < new_max_var; idx++){
+      bool toSkip = false;
+      if(remaining > 0 && idx + 1 == *excluded){
+        toSkip = true;
+        listPointer += 1;
+        remaining -= 1;
+      }
+      init_enqueue (idx + 1, toSkip);
+    }
+
+  }else{
+    for (int idx = old_max_var; idx < new_max_var; idx++)
+      init_enqueue (idx + 1, false);
+  }
+
 }
 
 // Shuffle the VMTF queue.
