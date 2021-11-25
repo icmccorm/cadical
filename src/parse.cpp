@@ -365,4 +365,124 @@ const char * Parser::parse_solution () {
   return err;
 }
 
+/*------------------------------------------------------------------------*/
+
+
+const char * Parser::parse_aux () {
+  double start = internal->time ();
+
+  const char * err = NULL;
+  int ch = 0;
+  int curr_aux = 0;
+  int num_parsed = 0;
+  int currentLine = 1;
+  int NUM_EQV = 0;
+  int NUM_DEF = 0;
+  int NUM_ITE = 0;
+  int NUM_AND = 0;
+  int NUM_XOR = 0;
+  int NUM_FUL = 0;
+  int NUM_OR = 0;
+  int NUM_TRI = 0;
+  int NUM_GEN = 0;
+  for(;;){
+    ch = parse_char();
+    if(ch == ' ' || ch == '\t'){
+      continue;
+    }else if(ch == EOF){
+      break;
+    }else if(isdigit(ch)){
+      err = parse_positive_int (ch, curr_aux, "<aux>");
+      if(!err){
+        external->add_aux(curr_aux);
+        ++num_parsed;
+        ch = parse_char();
+        switch(ch){
+          case 'A': {
+            if(parse_char() == 'N' && parse_char() == 'D'){
+              NUM_AND += 1;
+            }else{
+              PER ("Syntax error on line %d, invalid gate type.", currentLine);
+            }
+          } break;
+          case 'F': {
+            if(parse_char() == 'U' && parse_char() == 'L'){
+              NUM_FUL += 1;
+            }else{
+              PER ("Syntax error on line %d, invalid gate type.", currentLine);
+            }
+          } break;
+          case 'O': {
+            if(parse_char() == 'R'){
+              NUM_OR += 1;
+            }else{
+              PER ("Syntax error on line %d, invalid gate type.", currentLine);
+            }
+          } break;       
+          case 'T': {
+            if(parse_char() == 'R' && parse_char() == 'I'){
+              NUM_TRI += 1;
+            }else{
+              PER ("Syntax error on line %d, invalid gate type.", currentLine);
+            }
+          } break;    
+          case 'G': {
+            if(parse_char() == 'E' && parse_char() == 'N'){
+              NUM_GEN += 1;
+            }else{
+              PER ("Syntax error on line %d, invalid gate type.", currentLine);
+            }
+          } break;        
+          case 'E': {
+            if(parse_char() == 'Q' && parse_char() == 'V'){
+              NUM_EQV += 1;
+            }else{
+              PER ("Syntax error on line %d, invalid gate type.", currentLine);
+            }
+          } break;
+          case 'X': {
+            if(parse_char() == 'O' && parse_char() == 'R'){
+              NUM_XOR += 1;
+            }else{
+              PER ("Syntax error on line %d, invalid gate type.", currentLine);
+            }
+          } break;
+          case 'D': {
+            if(parse_char() == 'E' && parse_char() == 'F'){
+              NUM_DEF += 1;
+            }else{
+              PER ("Syntax error on line %d, invalid gate type.", currentLine);
+            }
+          } break;
+          case 'I': {
+            if(parse_char() == 'T' && parse_char() == 'E'){
+              NUM_ITE += 1;
+            }else{
+              PER ("Syntax error on line %d, invalid gate type.", currentLine);
+            }
+          } break;
+          default: 
+            break;
+        }
+
+        if(parse_char() != '\n'){
+          PER ("Syntax error on line %d, invalid gate type.", currentLine);
+        }else{
+          ++currentLine;
+        }
+      }
+    }else{
+      PER ("Syntax error on line %d", currentLine);
+    }
+    if (err) return err;
+  }
+  #ifndef QUIET
+    double end = internal->time ();
+    MSG ("parsed %d auxiliary variables in %.2f seconds %s time",
+      num_parsed, end - start, internal->opts.realtime ? "real" : "process");
+    printf("\nAUXLIST: %d,%d,%d,%d,%d,%d,%d,%d,%d\n", NUM_EQV, NUM_DEF, NUM_ITE, NUM_AND, NUM_XOR, NUM_FUL, NUM_OR, NUM_TRI, NUM_GEN);
+  #endif
+  return (const char *) err;
+}
+
 }

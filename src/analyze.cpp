@@ -171,9 +171,15 @@ void Internal::bump_variables () {
       analyze_bumped_rank (this), analyze_bumped_smaller (this));
   }
 
-  for (const auto & lit : analyzed)
-    bump_variable (lit);
-
+  for (const auto & lit : analyzed) {
+    #ifdef BRANCHAUX
+    if(!external->is_aux(i2e[vidx(lit)])){
+      bump_variable (lit);
+    }
+    #else
+      bump_variable (lit);
+    #endif
+  }
   if (use_scores ()) bump_variable_score_inc ();
 
   STOP (bump);
@@ -389,8 +395,8 @@ Clause * Internal::new_driving_clause (const int glue, int & jump) {
     // frequently.  Thus sorting effort is doubled here.
     //
     MSORT (opts.radixsortlim,
-      clause.begin (), clause.end (),
-      analyze_trail_negative_rank (this), analyze_trail_larger (this));
+           clause.begin (), clause.end (),
+           analyze_trail_negative_rank (this), analyze_trail_larger (this));
 
     jump = var (clause[1]).level;
     res = new_learned_redundant_clause (glue);
@@ -708,13 +714,33 @@ void Internal::analyze () {
       if (!flags (lit).seen) continue;
       if (var (lit).level == level) uip = lit;
     }
-    if (!--open) break;
-    reason = var (uip).reason;
-    LOG (reason, "analyzing %d reason", uip);
+    #ifdef UIPAUX
+      reason = var (uip).reason;
+      if (!--open && (!external->is_aux(i2e[vidx(uip)]) || reason == 0) )
+        break;
+      LOG (reason, "analyzing %d reason", uip);
+    #else
+      if (!--open) break;
+      reason = var (uip).reason;
+      LOG (reason, "analyzing %d reason", uip);
+    #endif
   }
   LOG ("first UIP %d", uip);
   clause.push_back (-uip);
 
+  #ifdef UIPAUX
+  for(int i = 0; ((unsigned long) i)<clause.size();){
+    int lit = clause.at(i);
+    if(external->is_aux(i2e[vidx(lit)])){
+      if(var(lit).reason != 0){
+        analyze_reason(lit, var(lit).reason, open);
+      }
+      clause.erase(clause.begin() + i);
+    }else{
+      ++i;
+    }
+  }
+  #endif
   // Update glue and learned (1st UIP literals) statistics.
   //
   int size = (int) clause.size ();
@@ -726,18 +752,27 @@ void Internal::analyze () {
   stats.learned.clauses++;
   assert (glue < size);
 
-  // Update decision heuristics.
-  //
-  if (opts.bump) bump_variables ();
 
   // Minimize the 1st UIP clause as pioneered by Niklas Soerensson in
   // MiniSAT and described in our joint SAT'09 paper.
   //
   if (size > 1) {
-    if (opts.minimize) minimize_clause ();
+    #ifndef UIPAUX
+    if (opts.shrink)
+      shrink_and_minimize_clause();
+    else if (opts.minimize)
+      minimize_clause();
+    #endif
     size = (int) clause.size ();
+
+    // Update decision heuristics.
+    //
+    if (opts.bump)
+      bump_variables();
+
     if (external->learner) external->export_learned_large_clause (clause);
-  } else if (external->learner) external->export_learned_unit_clause (-uip);
+  } else if (external->learner)
+    external->export_learned_unit_clause(-uip);
 
   // Update actual size statistics.
   //
