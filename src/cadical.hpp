@@ -705,6 +705,10 @@ public:
   //
   static void build (FILE * file, const char * prefix = "c ");
 
+  const char * read_aux (const char* path);
+  const char * read_aux (File* file);
+  const char * read_aux(FILE * externalFile, const char * name);
+
 private:
 
   //==== start of state ====================================================

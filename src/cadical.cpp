@@ -350,6 +350,7 @@ int App::main (int argc, char ** argv) {
 #endif
   bool witness = true, less = false;
   const char * dimacs_name, * err;
+  const char * aux_path = 0;
 
   for (int i = 1; i < argc; i++) {
     if (!strcmp (argv[i], "-h") ||
@@ -374,6 +375,14 @@ int App::main (int argc, char ** argv) {
         APPERR ("multiple solution file options '-w %s' and '-w %s'",
                 write_result_path, argv[i]);
       else write_result_path = argv[i];
+    } else if (!strcmp (argv[i], "-a")) {
+      if (++i == argc) APPERR ("argument to '-o' missing");
+      else if (aux_path)
+        APPERR ("multiple auxiliary file options '-a %s' and '-a %s'",
+          aux_path, argv[i]);
+      else if (!File::exists(argv[i]))
+        APPERR ("auxiliary file '%s' does not exist", argv[i]);
+      else aux_path = argv[i];
     } else if (!strcmp (argv[i], "-o")) {
       if (++i == argc) APPERR ("argument to '-o' missing");
       else if (output_path)
@@ -529,6 +538,9 @@ int App::main (int argc, char ** argv) {
       !strcmp (dimacs_path, proof_path) && strcmp (dimacs_path, "-"))
     APPERR ("DIMACS input file '%s' also specified as DRAT proof file",
       dimacs_path);
+  if(!dimacs_specified && !dimacs_path){
+    APPERR ("A DIMACS input file must be provided");
+  }
 
   /*----------------------------------------------------------------------*/
   // The '--less' option is not fully functional yet (it is also not
@@ -625,24 +637,26 @@ int App::main (int argc, char ** argv) {
         tout.green_code (), proof_path, tout.normal_code ());
   } else solver->verbose (1, "will not generate nor write DRAT proof");
   solver->section ("parsing input");
-  dimacs_name = dimacs_path ? dimacs_path : "<stdin>";
-  string help;
-  if (!dimacs_path) {
-    help += " ";
-    help += tout.magenta_code ();
-    help += "(use '-h' for a list of common options)";
-    help += tout.normal_code ();
-  }
-  solver->message ("reading DIMACS file from %s'%s'%s%s",
-    tout.green_code (), dimacs_name, tout.normal_code (), help.c_str ());
+
+  dimacs_name = dimacs_path;
+  const char* aux_name = aux_path ? aux_path : "<stdin>";
+
+  solver->message ("reading auxiliary file from %s'%s'%s",
+    tout.green_code (), aux_name, tout.normal_code ());
+
+  if(aux_path)
+    err = solver->read_aux(aux_path);
+  else
+    err = solver->read_aux(stdin, aux_name);
+  if (err) APPERR ("%s", err);
+
+  solver->message ("reading DIMACS file from %s'%s'%s",
+    tout.green_code (), dimacs_name, tout.normal_code ());
   bool incremental;
   vector<int> cube_literals;
-  if (dimacs_path)
-    err = solver->read_dimacs(dimacs_path, max_var, force_strict_parsing,
-                            incremental, cube_literals);
-  else
-    err = solver->read_dimacs(stdin, dimacs_name, max_var, force_strict_parsing,
-                            incremental, cube_literals);
+  err = solver->read_dimacs(dimacs_path, max_var, force_strict_parsing,
+                          incremental, cube_literals);
+         
   if (err) APPERR ("%s", err);
   if (read_solution_path) {
     solver->section ("parsing solution");

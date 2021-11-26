@@ -4,6 +4,7 @@
 /*------------------------------------------------------------------------*/
 
 #include "range.hpp"
+#include <unordered_set>
 
 /*------------------------------------------------------------------------*/
 
@@ -151,6 +152,14 @@ struct External {
   // external assignment using the extension stack (and sets 'extended').
   //
   void extend ();
+
+  /*----------------------------------------------------------------------*/
+
+  std::unordered_set<int> aux;          // List of auxiliary variables 
+
+  bool is_aux (int elit);                     // Check if a given variable is aux
+
+  void add_aux (int aux_lit);
 
   /*----------------------------------------------------------------------*/
 
