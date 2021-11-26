@@ -714,12 +714,32 @@ void Internal::analyze () {
       if (!flags (lit).seen) continue;
       if (var (lit).level == level) uip = lit;
     }
-    if (!--open) break;
-    reason = var (uip).reason;
+    #ifdef UIPAUX
+      reason = var (uip).reason;
+      if (!--open && (!external->is_aux(i2e[vidx(uip)]) || reason == 0) )
+        break;
+    #else
+      if (!--open) break;
+      reason = var (uip).reason;
+    #endif
     LOG (reason, "analyzing %d reason", uip);
   }
   LOG ("first UIP %d", uip);
   clause.push_back (-uip);
+
+  #ifdef UIPAUX
+  for(int i = 0; ((unsigned long) i)<clause.size();){
+    int lit = clause.at(i);
+    if(external->is_aux(i2e[vidx(lit)])){
+      if(var(lit).reason != 0){
+        analyze_reason(lit, var(lit).reason, open);
+      }
+      clause.erase(clause.begin() + i);
+    }else{
+      ++i;
+    }
+  }
+  #endif
 
   // Update glue and learned (1st UIP literals) statistics.
   //
