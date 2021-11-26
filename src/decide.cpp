@@ -50,6 +50,29 @@ int Internal::next_decision_variable_on_queue () {
 }
 #endif
 
+#ifdef BRANCHAUX
+int Internal::next_decision_variable_with_best_score () {
+  int res = 0;
+  for (;;) {
+    if(scores.empty ()){
+      printf("e RAN OUT\n");
+      abort();
+    }
+    res = scores.front ();
+    bool is_aux = external->is_aux(i2e[vidx(res)]);
+    if (!val (res) && !is_aux) {
+      break;
+    }else if(is_aux){
+      stab[res] = -1;
+      scores.update(res);
+    }else{
+      (void) scores.pop_front ();
+    }
+  }
+  LOG ("next decision variable %d with score %g", res, score (res));
+  return res;
+}
+#else
 // This function determines the best decision with respect to score.
 //
 int Internal::next_decision_variable_with_best_score () {
@@ -62,6 +85,7 @@ int Internal::next_decision_variable_with_best_score () {
   LOG ("next decision variable %d with score %g", res, score (res));
   return res;
 }
+#endif
 
 int Internal::next_decision_variable () {
   if (use_scores ()) return next_decision_variable_with_best_score ();
