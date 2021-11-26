@@ -9,6 +9,33 @@ namespace CaDiCaL {
 // largest decision level to backtrack to during 'restart' without changing
 // the assigned variables (if 'opts.restartreusetrail' is non-zero).
 
+#ifdef BRANCHAUX
+int Internal::next_decision_variable_on_queue () {
+  int64_t searched = 0;
+  int res = queue.unassigned;
+  while (val (res) || external->is_aux(i2e[vidx(res)])) {
+    if(!link (res).prev){
+      printf("e RAN OUT\n");
+    }
+    int temp = res;
+    res = link (res).prev, searched++;
+    if(external->is_aux(i2e[vidx(temp)])){
+      queue.dequeue (links, temp);
+      links[temp].next = queue.first;
+      links[queue.first].prev = temp;
+      queue.first = temp;
+      links[temp].prev = 0;
+      btab[temp] = btab[links[temp].next]-1;
+    }
+  }
+  if (searched) {
+    stats.searched += searched;
+    update_queue_unassigned (res);
+  }
+  LOG ("next queue decision variable %d bumped %" PRId64 "", res, bumped (res));
+  return res;
+}
+#else
 int Internal::next_decision_variable_on_queue () {
   int64_t searched = 0;
   int res = queue.unassigned;
@@ -21,6 +48,7 @@ int Internal::next_decision_variable_on_queue () {
   LOG ("next queue decision variable %d bumped %" PRId64 "", res, bumped (res));
   return res;
 }
+#endif
 
 // This function determines the best decision with respect to score.
 //
