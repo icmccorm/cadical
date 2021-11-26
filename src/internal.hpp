@@ -216,7 +216,7 @@ struct Internal {
   Arena arena;                  // memory arena for moving garbage collector
   Format error_message;         // provide persistent error message
   string prefix;                // verbose messages prefix
-
+  int NUM_AUX_DECISIONS;
   Internal * internal;          // proxy to 'this' in macros
   External * external;          // proxy to 'external' buddy in 'Solver'
 
